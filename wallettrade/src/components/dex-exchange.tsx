@@ -19,6 +19,7 @@ import Image from "next/image";
 import { defaultTokens, Token } from "@bot/lib/tokens";
 
 import SwapQuoteComponent from "./SwapComponent";
+import OrderBook from "./OrderBook";
 
 export default function DexExchange() {
   const { address, isConnected } = useAccount();
@@ -45,10 +46,11 @@ export default function DexExchange() {
   );
 
   const [fromToken, setFromToken] = useState(defaultTokens[1]);
-  const [toToken, setToToken] = useState(defaultTokens[0]);
+  const [toToken, setToToken] = useState(defaultTokens[1]);
 
+  const [isLoadingTrade, setIsLoadingTrade] = useState(false);
   const [allTokens, setAllTokens] = useState<Token[]>([]);
-  function fetchTokens() {
+  function fetchTokensViaPanCakeSwap() {
     //get request to /tokens localhost:3000/tokens
     fetch("http://localhost:3001/tokens")
       .then((response) => response.json())
@@ -60,60 +62,53 @@ export default function DexExchange() {
         console.error("Error fetching tokens:", error);
       });
   }
+  const fetchTokens = async () => {
+    try {
+      const response = await fetch("http://localhost:3001/dexTokens");
+      if (response.ok) {
+        const data = await response.json();
+        setAllTokens(data.tokens);
+      }
+    } catch (error) {
+      console.error("Error fetching tokens:", error);
+    }
+  };
   useEffect(() => {
     fetchTokens();
   }, []);
-  // Mock order book data
-  const sellOrders = [
-    { price: 2533.68, amount: 0.1898, total: 480.89246 },
-    { price: 2533.61, amount: 0.003, total: 7.60083 },
-    { price: 2533.6, amount: 0.085, total: 215.356 },
-    { price: 2533.59, amount: 0.37, total: 937.4283 },
-    { price: 2533.5, amount: 1.958, total: 4960.593 },
-    { price: 2533.49, amount: 1.1755, total: 2978.11749 },
-    { price: 2533.4, amount: 0.085, total: 215.339 },
-    { price: 2533.36, amount: 0.003, total: 7.60008 },
-  ];
 
-  const buyOrders = [
-    { price: 2532.8, amount: 0.085, total: 215.288 },
-    { price: 2532.71, amount: 0.0888, total: 224.90465 },
-    { price: 2532.6, amount: 0.085, total: 215.271 },
-    { price: 2532.52, amount: 0.415, total: 1050.9958 },
-    { price: 2532.51, amount: 0.691, total: 1749.96441 },
-    { price: 2532.4, amount: 0.085, total: 215.254 },
-    { price: 2532.34, amount: 0.003, total: 7.59702 },
-    { price: 2532.21, amount: 0.2421, total: 613.04804 },
-  ];
-
-  const popularTokens = [...defaultTokens];
-
-  const currentPrice = 2533.29;
+  const [popularTokens, setPopularTokens] = useState<Token[]>([]);
 
   const handleTradeInitiate = async () => {
-    console.log("Trade initiated ", inputRef.current?.value);
-    const body = {
-      swapFrom: fromToken,
-      swapTo: toToken,
-      address: address,
-      amount: inputRef.current?.value || "0",
-    };
-    console.log("Trade body:", body);
-    const response = await fetch("http://localhost:3001/swap", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
+    try {
+      setIsLoadingTrade(true);
+      console.log("Trade initiated ", inputRef.current?.value);
+      const body = {
+        swapFrom: fromToken,
+        swapTo: toToken,
+        address: address,
+        amount: inputRef.current?.value || "0",
+      };
+      console.log("Trade body:", body);
+      const response = await fetch("http://localhost:3001/swap", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
 
-    const data = await response.json();
-    const tx = data.transaction;
-    tx.gas = BigInt(tx.gas);
-    tx.value = BigInt(tx.value);
-    const result = await walletClient?.sendTransaction(tx);
-    console.log("Transaction result:", result);
-    return;
+      const data = await response.json();
+      const tx = data.transaction;
+      tx.gas = BigInt(tx.gas);
+      tx.value = BigInt(tx.value);
+      const result = await walletClient?.sendTransaction(tx);
+      console.log("Transaction result:", result);
+    } catch (error) {
+      console.error("Error initiating trade:", error);
+    } finally {
+      setIsLoadingTrade(false);
+    }
   };
   const onChangeSwapDirection = () => {
     setFromToken(toToken);
@@ -160,7 +155,7 @@ export default function DexExchange() {
                 }
               >
                 <Wallet className="w-4 h-4 mr-2" />
-                {isConnected ? "Connected" : "Connect Wallet"}
+                {isConnected ? "Connected" : "Connect To Trade"}
               </Button>
             </div>
 
@@ -308,114 +303,18 @@ export default function DexExchange() {
                   disabled={!isConnected}
                   onClick={handleTradeInitiate}
                 >
-                  {isConnected ? "Trade" : "Connect Wallet to Trade"}
+                  {isLoadingTrade
+                    ? "Making Trade..."
+                    : isConnected
+                    ? "Trade"
+                    : "Connect Wallet to Trade"}
                 </Button>
               </CardContent>
             </Card>
           </div>
 
           {/* Right Side - Order Book */}
-          <div className="md:col-span-1">
-            <Card className="bg-gray-900 border-yellow-500/20 h-full gap-4">
-              <CardHeader className="pb-0">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-white text-lg font-medium">
-                    {fromToken.symbol} / {toToken.symbol}
-                  </CardTitle>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1">
-                      <span className="text-sm text-gray-400">0.01</span>
-                      {/* <ChevronDown className="w-4 h-4 text-gray-400" /> */}
-                    </div>
-                    {/* <button className="text-gray-400 hover:text-white">
-                      <svg
-                        className="w-4 h-4"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                      </svg>
-                    </button> */}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {/* Column Headers */}
-                <div className="grid grid-cols-3 gap-2 text-xs text-gray-400 mb-3 px-1">
-                  <div>Price</div>
-                  <div className="text-right">Amount</div>
-                  <div className="text-right">Total</div>
-                </div>
-
-                {/* Sell Orders */}
-                <div className="space-y-0.5 mb-2">
-                  {sellOrders.map((order, index) => (
-                    <div
-                      key={index}
-                      className="grid grid-cols-3 gap-2 text-xs hover:bg-gray-800/50 px-1 py-0.5 rounded"
-                    >
-                      <div className="text-red-400 font-mono">
-                        {order.price.toFixed(2)}
-                      </div>
-                      <div className="text-right text-gray-300 font-mono">
-                        {order.amount.toFixed(4)}
-                      </div>
-                      <div className="text-right text-gray-300 font-mono">
-                        {order.total.toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 5,
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Current Price Section */}
-                <div className="flex items-center justify-between  mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl font-bold text-red-400">
-                      {currentPrice.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Buy Orders */}
-                <div className="space-y-0.5 mb-2">
-                  {buyOrders.map((order, index) => (
-                    <div
-                      key={index}
-                      className="grid grid-cols-3 gap-2 text-xs hover:bg-gray-800/50 px-1 py-0.5 rounded"
-                    >
-                      <div className="text-green-400 font-mono">
-                        {order.price.toFixed(2)}
-                      </div>
-                      <div className="text-right text-gray-300 font-mono">
-                        {order.amount.toFixed(4)}
-                      </div>
-                      <div className="text-right text-gray-300 font-mono">
-                        {order.total.toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 5,
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Market Summary Bar */}
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-green-400 font-medium">B 47.39%</span>
-                  <div className="flex-1 mx-3 h-1 bg-gray-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-green-400 to-red-400"
-                      style={{ width: "47.39%" }}
-                    ></div>
-                  </div>
-                  <span className="text-red-400 font-medium">52.61% S</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <OrderBook fromToken={fromToken} toToken={toToken} />
         </div>
       </div>
 
@@ -469,7 +368,7 @@ export default function DexExchange() {
               </div>
 
               {/* Token Icons Row */}
-              <div className="flex items-center gap-2 mt-1.5">
+              {/* <div className="flex items-center gap-2 mt-1.5">
                 {popularTokens.slice(0, 6).map((token, index) => (
                   <button
                     key={index}
@@ -496,7 +395,7 @@ export default function DexExchange() {
                 <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-sm text-gray-400">
                   +2
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Token List */}

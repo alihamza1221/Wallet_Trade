@@ -26,11 +26,6 @@ const SwapQuoteComponent = forwardRef<HTMLInputElement, SwapQuoteProps>(
 
       setIsLoadingQuote(true);
       try {
-        console.log("Fetching quote for:", {
-          swapFrom: swapFrom,
-          swapTo: swapTo,
-          amount: amount,
-        });
         const response = await fetch("http://localhost:3001/quote", {
           method: "POST",
           headers: {
