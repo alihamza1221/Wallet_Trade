@@ -52,7 +52,7 @@ export default function DexExchange() {
   const [allTokens, setAllTokens] = useState<Token[]>([]);
   function fetchTokensViaPanCakeSwap() {
     //get request to /tokens localhost:3000/tokens
-    fetch("http://localhost:3001/tokens")
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/tokens`)
       .then((response) => response.json())
       .then((data) => {
         console.log("Fetched tokens:", data.tokens);
@@ -64,7 +64,9 @@ export default function DexExchange() {
   }
   const fetchTokens = async () => {
     try {
-      const response = await fetch("http://localhost:3001/dexTokens");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/dexTokens`
+      );
       if (response.ok) {
         const data = await response.json();
         setAllTokens(data.tokens);
@@ -90,13 +92,16 @@ export default function DexExchange() {
         amount: inputRef.current?.value || "0",
       };
       console.log("Trade body:", body);
-      const response = await fetch("http://localhost:3001/swap", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/swap`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        }
+      );
 
       const data = await response.json();
       const tx = data.transaction;

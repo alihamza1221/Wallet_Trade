@@ -26,18 +26,21 @@ const SwapQuoteComponent = forwardRef<HTMLInputElement, SwapQuoteProps>(
 
       setIsLoadingQuote(true);
       try {
-        const response = await fetch("http://localhost:3001/quote", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/quote`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
 
-          body: JSON.stringify({
-            swapFrom: swapFrom,
-            swapTo: swapTo,
-            userAmount: amount,
-          }),
-        });
+            body: JSON.stringify({
+              swapFrom: swapFrom,
+              swapTo: swapTo,
+              userAmount: amount,
+            }),
+          }
+        );
 
         if (response.ok) {
           const data = await response.json();

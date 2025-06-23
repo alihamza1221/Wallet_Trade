@@ -88,7 +88,9 @@ export default function AdminTokens() {
   const fetchTokens = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:3001/dexTokens");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/dexTokens`
+      );
       if (response.ok) {
         const data = await response.json();
         setTokens(data.tokens);
@@ -104,16 +106,19 @@ export default function AdminTokens() {
     e.preventDefault();
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:3001/dexTokens", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          decimals: Number.parseInt(formData.decimals),
-        }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/dexTokens`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...formData,
+            decimals: Number.parseInt(formData.decimals),
+          }),
+        }
+      );
 
       if (response.ok) {
         await fetchTokens();
@@ -142,13 +147,16 @@ export default function AdminTokens() {
   const handleDeleteToken = async (symbol: string) => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:3001/dexTokens", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ symbol }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/dexTokens`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ symbol }),
+        }
+      );
 
       if (response.ok) {
         await fetchTokens();
