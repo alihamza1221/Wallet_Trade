@@ -5,6 +5,7 @@ import { createWeb3Modal } from "@web3modal/wagmi/react";
 import { State, WagmiProvider } from "wagmi";
 import { ReactNode } from "react";
 import { config } from "@bot/lib/config";
+import { chains } from "@bot/lib/config";
 // Setup queryClient
 const queryClient = new QueryClient();
 
@@ -12,8 +13,10 @@ const queryClient = new QueryClient();
 createWeb3Modal({
   wagmiConfig: config,
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
-  enableAnalytics: true, // Optional - defaults to your Cloud configuration
-  enableOnramp: true, // Optional - false as default
+  enableOnramp: false,
+  enableSwaps: false,
+  enableAnalytics: false,
+  defaultChain: chains[0],
 });
 
 interface Web3ModalProviderProps {

@@ -1,7 +1,12 @@
-import { createPublicClient, http, hexToBigInt, parseUnits } from "viem";
+import {
+  createPublicClient,
+  http,
+  hexToBigInt,
+  parseUnits,
+  formatEther,
+} from "viem";
 
 import { bsc } from "viem/chains";
-import { bscTokens } from "@pancakeswap/tokens";
 import { GraphQLClient } from "graphql-request";
 import {
   SmartRouter,
@@ -225,6 +230,7 @@ app.delete("/dexTokens", async (req, res) => {
     });
   } catch (e) {}
 });
+
 app.listen(3001, () => {
   console.log("Server is running on port 3001");
 });

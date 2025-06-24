@@ -4,7 +4,8 @@ import { defaultTokens, Token } from "@bot/lib/tokens";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-
+import MaxBtn from "./MaxBtn";
+import { useAccount, useBalance } from "wagmi";
 type SwapQuoteProps = {
   isConnected: boolean;
   onChangeSwapDirection: () => void;
@@ -14,6 +15,11 @@ type SwapQuoteProps = {
 const SwapQuoteComponent = forwardRef<HTMLInputElement, SwapQuoteProps>(
   (props: SwapQuoteProps, ref: any) => {
     const { isConnected, onChangeSwapDirection, swapFrom, swapTo } = props;
+    const { address } = useAccount();
+    const balance = useBalance({
+      address,
+      token: swapFrom.address,
+    });
     const [quote, setQuote] = useState("");
     const [isLoadingQuote, setIsLoadingQuote] = useState(false);
     const [fromAmount, setFromAmount] = useState("");
@@ -70,9 +76,16 @@ const SwapQuoteComponent = forwardRef<HTMLInputElement, SwapQuoteProps>(
       setQuote("");
       setFromAmount("");
     };
+    const onMaxBtnClick = () => {
+      if (!isConnected) {
+        alert("Please connect your wallet first.");
+        return;
+      }
+      setFromAmount(balance.data?.formatted ?? "0");
+      fetchQuote(balance.data?.formatted);
+    };
     return (
       <div>
-        {/* value={isLoadingQuote ? "Loading..." : quote} */}
         <div className="space-y-2">
           <label className="text-sm text-gray-400">Amount</label>
           <div className="relative">
@@ -83,11 +96,12 @@ const SwapQuoteComponent = forwardRef<HTMLInputElement, SwapQuoteProps>(
               value={fromAmount}
               onChange={(e) => setFromAmount(e.target.value)}
               onBlur={handleAmountBlur}
-              className="bg-black/50 border-gray-700 text-white pr-20 h-12 [&::-webkit-inner-spin-button]:appearance-none 
+              className="bg-black/50 border-gray-700 text-white pr-20 md:h-12 [&::-webkit-inner-spin-button]:appearance-none 
                [&::-webkit-outer-spin-button]:appearance-none 
                [-moz-appearance:textfield]"
             />
           </div>
+          <MaxBtn onMaxPress={onMaxBtnClick} />
         </div>
 
         {/* Swap Arrow */}
@@ -113,7 +127,7 @@ const SwapQuoteComponent = forwardRef<HTMLInputElement, SwapQuoteProps>(
               }
               disabled={false}
               readOnly={true}
-              className="bg-black/50 border-gray-700 text-white pr-20 h-12 placeholder-gray-200"
+              className="bg-black/50 border-gray-700 text-white pr-20 md:h-12 placeholder-gray-200"
             />
           </div>
         </div>

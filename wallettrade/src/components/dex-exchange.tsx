@@ -10,8 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@bot/components/ui/card";
-import { Search, ScanSearchIcon } from "lucide-react";
-import { Badge } from "@bot/components/ui/badge";
+import { ScanSearchIcon } from "lucide-react";
 import { ArrowUpDown, Wallet, ChevronDown, Zap } from "lucide-react";
 import { useAccount, useDisconnect } from "wagmi";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
@@ -20,15 +19,18 @@ import { defaultTokens, Token } from "@bot/lib/tokens";
 
 import SwapQuoteComponent from "./SwapComponent";
 import OrderBook from "./OrderBook";
+import { useBalance } from "wagmi";
 
 export default function DexExchange() {
   const { address, isConnected } = useAccount();
 
   const { disconnect } = useDisconnect();
   const { open } = useWeb3Modal();
+
   const { data: walletClient } = useWalletClient();
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const bnbBalance = useBalance({ address });
   const handleWalletConnect = () => {
     if (isConnected) {
       console.log("Disconnecting wallet...");
@@ -79,8 +81,6 @@ export default function DexExchange() {
     fetchTokens();
   }, []);
 
-  const [popularTokens, setPopularTokens] = useState<Token[]>([]);
-
   const handleTradeInitiate = async () => {
     try {
       setIsLoadingTrade(true);
@@ -122,23 +122,23 @@ export default function DexExchange() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <header className="border-b border-yellow-500/20 bg-black/95 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
+      <header className="border-b border-yellow-500/20 bg-black/95 backdrop-blur-sm sticky top-0 z-50 overflow-hidden">
+        <div className="container mx-auto px-2 sm:px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Zap className="w-8 h-8 text-yellow-400" />
-                <span className="text-xl font-bold text-yellow-400">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="flex items-center gap-1">
+                <Zap className=" w-5 h-5 sm:w-8 sm:h-8 text-yellow-400" />
+                <span className="text-lg sm:text-xl font-bold text-yellow-400">
                   WalletTrader
                 </span>
               </div>
             </div>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-4">
+            {/*  Navigation */}
+            <div className="flex items-center gap-1 md:gap-4">
               <Button
                 variant="outline"
-                className="border-gray-600 text-gray-300 hover:bg-gray-100 flex items-center gap-2 p-3 px-3"
+                className="border-gray-600 text-gray-300 hover:bg-gray-100 flex items-center gap-1 p-1.5 px-2 md:gap-2  md:p-3 md:px-3 "
               >
                 <div className=" bg-yellow-400 rounded-lg flex items-center justify-center">
                   <Image
@@ -149,7 +149,9 @@ export default function DexExchange() {
                     height={24}
                   />
                 </div>
-                <span className="text-black">BNB Chain</span>
+                <span className="text-black">
+                  {parseFloat(bnbBalance.data?.formatted ?? "0").toFixed(3)}
+                </span>
               </Button>
               <Button
                 onClick={() => handleWalletConnect()}
@@ -159,133 +161,54 @@ export default function DexExchange() {
                     : "bg-yellow-400 text-black hover:bg-yellow-500"
                 }
               >
-                <Wallet className="w-4 h-4 mr-2" />
-                {isConnected ? "Connected" : "Connect To Trade"}
+                <Wallet className="w-3 h-3 mr-0 md:w-4 md:h-4 md:mr-2" />
+                {isConnected ? "Connected" : "Start Trade"}
               </Button>
             </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-yellow-400 hover:bg-yellow-400/10 rounded-lg"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                {mobileMenuOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                )}
-              </svg>
-            </button>
           </div>
-
-          {/* Mobile Navigation Menu */}
-          {mobileMenuOpen && (
-            <div className="md:hidden mt-4 pt-4 border-t border-yellow-500/20">
-              <div className="flex flex-col gap-3">
-                <Badge
-                  variant="outline"
-                  className="border-yellow-400 text-yellow-400 w-fit"
-                >
-                  BSC Network
-                </Badge>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white w-full justify-start flex items-center gap-2 px-3"
-                >
-                  <div className="w-6 h-6 bg-yellow-400 rounded-lg flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 text-black"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                    </svg>
-                  </div>
-                  <span>BNB Chain</span>
-                  <ChevronDown className="w-4 h-4" />
-                </Button>
-                <Button
-                  onClick={handleWalletConnect}
-                  className={`w-full justify-start ${
-                    isConnected
-                      ? "bg-green-600 hover:bg-green-700"
-                      : "bg-yellow-400 text-black hover:bg-yellow-500"
-                  }`}
-                >
-                  <Wallet className="w-4 h-4 mr-2" />
-                  {isConnected ? "Connected" : "Connect Wallet"}
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
       </header>
-      <div className="container mx-auto px-4 py-6 max-w-[768px]">
-        <div className="grid grid-cols-2 gap-4">
+      <div className="container mx-auto md:px-4 py-6 max-w-[768px]">
+        <div className="grid grid-cols-2 gap-0 md:gap-4">
           {/* Left Side - Swap Interface */}
           <div className="lg:col-span-1">
-            <Card className="bg-gray-900 border-yellow-500/20 h-full">
-              <CardHeader>
+            <Card className="bg-gray-900 border-yellow-500/20 h-full border-r-0 md:border-[1px]  rounded-tr-none rounded-br-none md:rounded-xl ">
+              <CardHeader className="px-2 md:px-6">
                 <CardTitle className="text-yellow-400 flex items-center gap-2">
                   <ArrowUpDown className="w-5 h-5" />
                   Swap Tokens
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 px-2 md:px-6">
                 {/* Trading Pair */}
                 <div
-                  className="flex items-center justify-between p-3 bg-black/50 rounded-lg cursor-pointer hover:bg-black/70 transition-colors"
+                  className="flex items-center justify-between p-2 px-3 md:p-3 bg-black/50 rounded-lg cursor-pointer hover:bg-black/70 transition-colors"
                   onClick={() => {
                     setSelectedTokenType("from");
                     setShowTokenModal(true);
                   }}
                 >
-                  <span className="text-sm text-gray-400">
-                    {fromToken.symbol}
-                  </span>
+                  <span className="text-sm text-white">{fromToken.symbol}</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold">
-                      {fromToken.symbol + "/" + toToken.symbol}
-                    </span>
                     <ChevronDown className="w-4 h-4 text-gray-400" />
                   </div>
                 </div>
                 <div
-                  className="flex items-center justify-between p-3 bg-black/50 rounded-lg cursor-pointer hover:bg-black/70 transition-colors"
+                  className="flex items-center justify-between p-2 px-3 md:p-3 bg-black/50 rounded-lg cursor-pointer hover:bg-black/70 transition-colors"
                   onClick={() => {
                     setSelectedTokenType("to");
                     setShowTokenModal(true);
                   }}
                 >
-                  <span className="text-sm text-gray-400">
-                    {toToken.symbol}
-                  </span>
+                  <span className="text-sm text-white">{toToken.symbol}</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold">{toToken.symbol}</span>
                     <ChevronDown className="w-4 h-4 text-gray-400" />
                   </div>
                 </div>
 
                 {/* Market Order Label */}
-                <div className="flex items-center justify-center p-3 bg-black/50 rounded-lg">
-                  <span className="text-sm font-medium text-yellow-400">
+                <div className="flex items-center justify-center  md:bg-black/50 rounded-lg">
+                  <span className="text-sm font-medium text-yellow-400 p-1.5 bg-black/50 rounded-lg px-3 md:p-3 md:bg-transparent">
                     Market Order
                   </span>
                 </div>

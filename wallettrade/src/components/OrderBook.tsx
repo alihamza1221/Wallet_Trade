@@ -53,30 +53,29 @@ const OrderBook = (props: OrderBookProps) => {
   const fetchQuoteAndUpdateOrderBook = React.useCallback(async () => {
     try {
       const quoteResult = await getQuote(fromToken, toToken, "1");
+      console.log("Quote result:", quoteResult);
       setQuote(quoteResult ?? "0.0");
 
       const currentPrice = parseFloat(quoteResult ?? "0");
-      if (currentPrice > 0) {
-        setSellOrders(generateSellOrders(currentPrice));
-        setBuyOrders(generateBuyOrders(currentPrice));
-      }
+
+      setSellOrders(generateSellOrders(currentPrice));
+      setBuyOrders(generateBuyOrders(currentPrice));
     } catch (error) {
       console.error("Failed to fetch quote:", error);
     }
   }, [fromToken, toToken]);
 
-  // Effect to fetch quote immediately and then every 20 seconds
   React.useEffect(() => {
     fetchQuoteAndUpdateOrderBook();
-    const interval = setInterval(fetchQuoteAndUpdateOrderBook, 20000);
+    const interval = setInterval(fetchQuoteAndUpdateOrderBook, 10000);
 
     return () => clearInterval(interval);
   }, [fetchQuoteAndUpdateOrderBook]);
 
   return (
     <div className="md:col-span-1">
-      <Card className="bg-gray-900 border-yellow-500/20 h-full gap-4">
-        <CardHeader className="pb-0">
+      <Card className="bg-gray-900 border-yellow-500/20 h-full gap-4 border-l-0 md:border-1 rounded-tl-none  rounded-bl-none md:rounded-xl">
+        <CardHeader className="pb-0 px-0 pr-2 md:px-6 ">
           <div className="flex items-center justify-between">
             <CardTitle className="text-white text-lg font-medium">
               {fromToken.symbol} / {toToken.symbol}
@@ -98,7 +97,7 @@ const OrderBook = (props: OrderBookProps) => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 px-0 pr-2 md:px-6">
           {/* Column Headers */}
           <div className="grid grid-cols-3 gap-2 text-xs text-gray-400 mb-3 px-1">
             <div>Price</div>
@@ -114,15 +113,15 @@ const OrderBook = (props: OrderBookProps) => {
                 className="grid grid-cols-3 gap-2 text-xs hover:bg-gray-800/50 px-1 py-0.5 rounded"
               >
                 <div className="text-red-400 font-mono">
-                  {order.price.toFixed(2)}
+                  {order.price.toFixed(3)}
                 </div>
                 <div className="text-right text-gray-300 font-mono">
-                  {order.amount.toFixed(4)}
+                  {order.amount.toFixed(3)}
                 </div>
                 <div className="text-right text-gray-300 font-mono">
                   {order.total.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 5,
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
                   })}
                 </div>
               </div>
@@ -133,7 +132,7 @@ const OrderBook = (props: OrderBookProps) => {
           <div className="flex items-center justify-between  mb-2">
             <div className="flex items-center gap-2">
               <span className="text-xl font-bold text-red-400">
-                {parseFloat(quote).toFixed(2)}
+                {parseFloat(quote).toFixed(4)}
               </span>
             </div>
           </div>
@@ -146,16 +145,16 @@ const OrderBook = (props: OrderBookProps) => {
                 className="grid grid-cols-3 gap-2 text-xs hover:bg-gray-800/50 px-1 py-0.5 rounded"
               >
                 <div className="text-green-400 font-mono">
-                  {order.price.toFixed(2)}
+                  {/* @ts-ignore */}
+                  {Math.abs(order.price?.toFixed(3))}
                 </div>
                 <div className="text-right text-gray-300 font-mono">
-                  {order.amount.toFixed(4)}
+                  {/* @ts-ignore */}
+                  {Math.abs(order.amount.toFixed(3))}
                 </div>
                 <div className="text-right text-gray-300 font-mono">
-                  {order.total.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 5,
-                  })}
+                  {/* @ts-ignore */}
+                  {Math.abs(order.total.toFixed(1))}
                 </div>
               </div>
             ))}
