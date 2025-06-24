@@ -96,7 +96,7 @@ const SwapQuoteComponent = forwardRef<HTMLInputElement, SwapQuoteProps>(
               value={fromAmount}
               onChange={(e) => setFromAmount(e.target.value)}
               onBlur={handleAmountBlur}
-              className="bg-black/50 border-gray-700 text-white pr-20 md:h-12 [&::-webkit-inner-spin-button]:appearance-none 
+              className="bg-black/50 border-gray-700 text-white pr-5 md:pr-20 md:h-12 [&::-webkit-inner-spin-button]:appearance-none 
                [&::-webkit-outer-spin-button]:appearance-none 
                [-moz-appearance:textfield]"
             />
@@ -127,7 +127,7 @@ const SwapQuoteComponent = forwardRef<HTMLInputElement, SwapQuoteProps>(
               }
               disabled={false}
               readOnly={true}
-              className="bg-black/50 border-gray-700 text-white pr-20 md:h-12 placeholder-gray-200"
+              className="bg-black/50 border-gray-700 text-white pr-5 md:pr-20 md:h-12 placeholder-gray-200"
             />
           </div>
         </div>
