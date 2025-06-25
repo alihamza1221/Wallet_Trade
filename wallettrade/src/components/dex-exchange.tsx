@@ -252,7 +252,7 @@ export default function DexExchange() {
               <CardHeader className="px-2 md:px-6">
                 <CardTitle className="text-yellow-400 flex items-center gap-2">
                   <ArrowUpDown className="w-5 h-5" />
-                  Swap Tokens
+                  Trade Tokens
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 px-2 md:px-6">
