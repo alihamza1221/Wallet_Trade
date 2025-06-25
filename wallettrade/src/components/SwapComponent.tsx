@@ -1,11 +1,12 @@
 "use client";
 import React, { useState, forwardRef } from "react";
-import { defaultTokens, Token } from "@bot/lib/tokens";
+import { Token } from "@bot/lib/tokens";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import MaxBtn from "./MaxBtn";
 import { useAccount, useBalance } from "wagmi";
+import { useToast } from "./ToastProvider";
 type SwapQuoteProps = {
   isConnected: boolean;
   onChangeSwapDirection: () => void;
@@ -23,7 +24,7 @@ const SwapQuoteComponent = forwardRef<HTMLInputElement, SwapQuoteProps>(
     const [quote, setQuote] = useState("");
     const [isLoadingQuote, setIsLoadingQuote] = useState(false);
     const [fromAmount, setFromAmount] = useState("");
-
+    const { showToast } = useToast();
     const fetchQuote = async (amount: any) => {
       if (!amount || parseFloat(amount) <= 0) {
         setQuote("");
@@ -72,6 +73,11 @@ const SwapQuoteComponent = forwardRef<HTMLInputElement, SwapQuoteProps>(
       fetchQuote(amount);
     };
     const handleOnChangeSwapDirection = () => {
+      showToast({
+        type: "info",
+        title: "Swap Direction Changed",
+        message: "Swapping " + swapTo.symbol + " to " + swapFrom.symbol,
+      });
       onChangeSwapDirection();
       setQuote("");
       setFromAmount("");

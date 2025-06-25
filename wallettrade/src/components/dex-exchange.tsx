@@ -16,6 +16,7 @@ import { useAccount, useDisconnect } from "wagmi";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
 import Image from "next/image";
 import { defaultTokens, Token } from "@bot/lib/tokens";
+import { useToast } from "@bot/components/ToastProvider";
 
 import SwapQuoteComponent from "./SwapComponent";
 import OrderBook from "./OrderBook";
@@ -23,24 +24,45 @@ import { useBalance } from "wagmi";
 
 export default function DexExchange() {
   const { address, isConnected } = useAccount();
+  const {
+    showLoadingToast,
+    updateToastToSuccess,
+    updateToastToError,
+    showToast,
+    hideToast,
+  } = useToast();
 
   const { disconnect } = useDisconnect();
   const { open } = useWeb3Modal();
-
+  const [walletConnectToastId, setWalletConnectToastId] = useState<string>("");
   const { data: walletClient } = useWalletClient();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const bnbBalance = useBalance({ address });
-  const handleWalletConnect = () => {
+  const handleWalletConnect = async () => {
     if (isConnected) {
       console.log("Disconnecting wallet...");
+
       disconnect();
+      showToast({
+        type: "info",
+        title: "Wallet Disconnected",
+        message: "Your wallet has been disconnected successfully",
+      });
     } else {
-      open(); // This opens the wallet selection modal
+      const toastId = showLoadingToast(
+        "Connecting Wallet",
+        "Please approve the connection in your wallet..."
+      );
+      setWalletConnectToastId(toastId);
+
+      await open();
+      setTimeout(() => {
+        hideToast(toastId);
+      }, 1500); // Simulate a delay for connection
     }
   };
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [tokenSearchQuery, setTokenSearchQuery] = useState("");
   const [selectedTokenType, setSelectedTokenType] = useState<"from" | "to">(
@@ -81,17 +103,42 @@ export default function DexExchange() {
     fetchTokens();
   }, []);
 
+  useEffect(() => {
+    if (isConnected && walletConnectToastId != "") {
+      updateToastToSuccess(
+        walletConnectToastId,
+        "Wallet Connection Success",
+        "Wallet modal closed "
+      );
+    }
+  }, [isConnected]);
+
   const handleTradeInitiate = async () => {
+    if (isLoadingTrade) {
+      showToast({
+        type: "info",
+        title: "Trade in Progress",
+        message: "Please wait for the current trade to complete.",
+      });
+      return;
+    }
     try {
       setIsLoadingTrade(true);
-      console.log("Trade initiated ", inputRef.current?.value);
+      // Show loading toast
+      const toastId = showLoadingToast(
+        "Executing Trade",
+        `Swapping ${inputRef.current?.value || "0"} ${fromToken.symbol} for ${
+          toToken.symbol
+        }`
+      );
+
+      setWalletConnectToastId(toastId);
       const body = {
         swapFrom: fromToken,
         swapTo: toToken,
         address: address,
         amount: inputRef.current?.value || "0",
       };
-      console.log("Trade body:", body);
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/swap`,
         {
@@ -102,14 +149,33 @@ export default function DexExchange() {
           body: JSON.stringify(body),
         }
       );
+      if (!response.ok) {
+        updateToastToError(
+          walletConnectToastId,
+          "Trade Failed",
+          "An error occurred while executing the trade. Please try again."
+        );
+      }
 
       const data = await response.json();
       const tx = data.transaction;
       tx.gas = BigInt(tx.gas);
       tx.value = BigInt(tx.value);
       const result = await walletClient?.sendTransaction(tx);
-      console.log("Transaction result:", result);
+
+      updateToastToSuccess(
+        toastId,
+        "Trade Executed Successfully",
+        `Swapped ${inputRef.current?.value || "0"} ${fromToken.symbol} for ${
+          toToken.symbol
+        }`
+      );
     } catch (error) {
+      updateToastToError(
+        walletConnectToastId,
+        "Trade Failed",
+        "An error occurred while executing the trade. Please try again."
+      );
       console.error("Error initiating trade:", error);
     } finally {
       setIsLoadingTrade(false);

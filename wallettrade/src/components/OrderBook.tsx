@@ -52,11 +52,9 @@ const OrderBook = (props: OrderBookProps) => {
   // Function to fetch quote and update order book
   const fetchQuoteAndUpdateOrderBook = React.useCallback(async () => {
     try {
-      const quoteResult = await getQuote(fromToken, toToken, "1");
-      console.log("Quote result:", quoteResult);
-      setQuote(quoteResult ?? "0.0");
+      setQuote(toToken.usdtPrice);
 
-      const currentPrice = parseFloat(quoteResult ?? "0");
+      const currentPrice = parseFloat(toToken.usdtPrice);
 
       setSellOrders(generateSellOrders(currentPrice));
       setBuyOrders(generateBuyOrders(currentPrice));
@@ -67,7 +65,7 @@ const OrderBook = (props: OrderBookProps) => {
 
   React.useEffect(() => {
     fetchQuoteAndUpdateOrderBook();
-    const interval = setInterval(fetchQuoteAndUpdateOrderBook, 10000);
+    const interval = setInterval(fetchQuoteAndUpdateOrderBook, 5000);
 
     return () => clearInterval(interval);
   }, [fetchQuoteAndUpdateOrderBook]);

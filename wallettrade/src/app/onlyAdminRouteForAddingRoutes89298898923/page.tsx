@@ -14,16 +14,7 @@ import {
 import { Badge } from "@bot/components/ui/badge";
 import { Plus, Search, MoreVertical, Trash2, X } from "lucide-react";
 
-type Token = {
-  name: string;
-  symbol: string;
-  address?: string;
-  chainId: number;
-  decimals: number;
-  logoURI: string;
-  isNative?: boolean;
-  isToken?: boolean;
-};
+import { Token } from "@bot/lib/tokens";
 
 // Add this style block at the beginning of the component, right after the imports
 const styles = `
@@ -63,6 +54,20 @@ export default function AdminTokens() {
     isNative: false,
     address: "",
     logoURI: "",
+  });
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingToken, setEditingToken] = useState<Token | null>(null);
+
+  const [editFormData, setEditFormData] = useState({
+    chainId: 56,
+    decimals: "",
+    symbol: "",
+    name: "",
+    isNative: false,
+    address: "",
+    logoURI: "",
+    usdtPrice: "",
   });
 
   // Fetch tokens on component mount
@@ -171,6 +176,66 @@ export default function AdminTokens() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditToken = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingToken) return;
+
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/dexTokens/${editingToken.symbol}`,
+        {
+          method: "Patch",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...editFormData,
+            decimals: Number.parseInt(editFormData.decimals),
+          }),
+        }
+      );
+
+      if (response.ok) {
+        await fetchTokens();
+        setShowEditModal(false);
+        setEditingToken(null);
+        setEditFormData({
+          chainId: 56,
+          decimals: "",
+          symbol: "",
+          name: "",
+          isNative: false,
+          address: "",
+          logoURI: "",
+          usdtPrice: "",
+        });
+      } else {
+        const error = await response.json();
+        alert(error.message || "Error updating token");
+      }
+    } catch (error) {
+      console.error("Error updating token:", error);
+      alert("Error updating token");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const openEditModal = (token: Token) => {
+    setEditingToken(token);
+    setEditFormData({
+      chainId: token.chainId,
+      decimals: token.decimals.toString(),
+      symbol: token.symbol,
+      name: token.name,
+      isNative: token.isNative || false,
+      address: token.address || "",
+      logoURI: token.logoURI || "",
+      usdtPrice: (token as any).usdtPrice || "",
+    });
+    setShowEditModal(true);
   };
 
   return (
@@ -311,6 +376,28 @@ export default function AdminTokens() {
                         {/* Delete Menu */}
                         {showDeleteMenu === token.symbol && (
                           <div className="absolute right-0 top-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-10">
+                            <button
+                              onClick={() => {
+                                openEditModal(token);
+                                setShowDeleteMenu(null);
+                              }}
+                              className="flex items-center gap-2 px-4 py-2 text-yellow-400 hover:bg-gray-700 rounded-lg w-full text-left"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
+                              </svg>
+                              Edit
+                            </button>
                             <button
                               onClick={() => handleDeleteToken(token.symbol)}
                               className="flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-gray-700 rounded-lg w-full text-left"
@@ -492,6 +579,199 @@ export default function AdminTokens() {
         </div>
       )}
 
+      {/* Edit Token Modal */}
+      {showEditModal && editingToken && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-900 rounded-2xl w-full max-w-md max-h-[90vh] border border-gray-700 flex flex-col">
+            {/* Modal Header - Fixed */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-700 flex-shrink-0">
+              <h3 className="text-lg font-semibold text-white">Edit Token</h3>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-gray-400 hover:text-white p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content - Scrollable */}
+            <div className="flex-1 overflow-y-auto scrollbar-hide">
+              <form onSubmit={handleEditToken} className="p-6 space-y-4">
+                {/* Chain ID */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Chain ID
+                  </label>
+                  <Input
+                    type="number"
+                    value={editFormData.chainId}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        chainId: Number.parseInt(e.target.value) || 56,
+                      })
+                    }
+                    className="bg-gray-800 border-gray-700 text-white"
+                  />
+                </div>
+
+                {/* Symbol */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Symbol <span className="text-red-400">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    value={editFormData.symbol}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        symbol: e.target.value,
+                      })
+                    }
+                    className="bg-gray-800 border-gray-700 text-white"
+                    required
+                  />
+                </div>
+
+                {/* Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Name <span className="text-red-400">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    value={editFormData.name}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, name: e.target.value })
+                    }
+                    className="bg-gray-800 border-gray-700 text-white"
+                    required
+                  />
+                </div>
+
+                {/* Decimals */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Decimals <span className="text-red-400">*</span>
+                  </label>
+                  <Input
+                    type="number"
+                    value={editFormData.decimals}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        decimals: e.target.value,
+                      })
+                    }
+                    className="bg-gray-800 border-gray-700 text-white"
+                    required
+                  />
+                </div>
+
+                {/* USDT Price */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    USDT Price
+                  </label>
+                  <Input
+                    type="text"
+                    value={editFormData.usdtPrice}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        usdtPrice: e.target.value,
+                      })
+                    }
+                    className="bg-gray-800 border-gray-700 text-white"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                {/* Is Native */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="editIsNative"
+                    checked={editFormData.isNative}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        isNative: e.target.checked,
+                      })
+                    }
+                    className="w-4 h-4 text-yellow-400 bg-gray-800 border-gray-700 rounded focus:ring-yellow-400"
+                  />
+                  <label
+                    htmlFor="editIsNative"
+                    className="text-sm font-medium text-gray-300"
+                  >
+                    Is Native Token
+                  </label>
+                </div>
+
+                {/* Address (only if not native) */}
+                {!editFormData.isNative && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Contract Address <span className="text-red-400">*</span>
+                    </label>
+                    <Input
+                      type="text"
+                      value={editFormData.address}
+                      onChange={(e) =>
+                        setEditFormData({
+                          ...editFormData,
+                          address: e.target.value,
+                        })
+                      }
+                      className="bg-gray-800 border-gray-700 text-white"
+                      required={!editFormData.isNative}
+                    />
+                  </div>
+                )}
+
+                {/* Logo URI */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Logo URI (optional)
+                  </label>
+                  <Input
+                    type="url"
+                    value={editFormData.logoURI}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        logoURI: e.target.value,
+                      })
+                    }
+                    className="bg-gray-800 border-gray-700 text-white"
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowEditModal(false)}
+                    className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 bg-yellow-400 text-black hover:bg-yellow-500"
+                  >
+                    {loading ? "Updating..." : "Update Token"}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Click outside to close delete menu */}
       {showDeleteMenu && (
         <div
