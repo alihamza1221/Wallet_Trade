@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Wallet Trade",
+  title: "Wallet Trader",
   description: "A decentralized trading platform for crypto assets",
 };
 
