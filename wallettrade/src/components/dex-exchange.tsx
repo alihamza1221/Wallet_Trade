@@ -12,7 +12,7 @@ import {
 } from "@bot/components/ui/card";
 import { ScanSearchIcon } from "lucide-react";
 import { ArrowUpDown, Wallet, ChevronDown, Zap } from "lucide-react";
-import { useAccount, useDisconnect } from "wagmi";
+import { useAccount, useDisconnect, usePublicClient } from "wagmi";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
 import Image from "next/image";
 import { defaultTokens, Token } from "@bot/lib/tokens";
@@ -74,6 +74,7 @@ export default function DexExchange() {
 
   const [isLoadingTrade, setIsLoadingTrade] = useState(false);
   const [allTokens, setAllTokens] = useState<Token[]>([]);
+  const publicClient = usePublicClient();
   function fetchTokensViaPanCakeSwap() {
     //get request to /tokens localhost:3000/tokens
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/tokens`)
@@ -159,8 +160,16 @@ export default function DexExchange() {
 
       const data = await response.json();
       const tx = data.transaction;
-      tx.gas = BigInt(tx.gas);
+      // tx.gas = BigInt(tx.gas);
+
       tx.value = BigInt(tx.value);
+
+      hideToast(toastId);
+      showToast({
+        type: "info",
+        title: "Trade Initiated",
+        message: `Transaction sent. Please check your wallet for confirmation.`,
+      });
       const result = await walletClient?.sendTransaction(tx);
 
       updateToastToSuccess(
@@ -179,6 +188,7 @@ export default function DexExchange() {
       console.error("Error initiating trade:", error);
     } finally {
       setIsLoadingTrade(false);
+      hideToast(walletConnectToastId);
     }
   };
   const onChangeSwapDirection = () => {
