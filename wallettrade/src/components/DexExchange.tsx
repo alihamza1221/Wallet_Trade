@@ -172,19 +172,20 @@ export default function DexExchange() {
       });
       const result = await walletClient?.sendTransaction(tx);
 
-      updateToastToSuccess(
-        toastId,
-        "Trade Executed Successfully",
-        `Swapped ${inputRef.current?.value || "0"} ${fromToken.symbol} for ${
-          toToken.symbol
-        }`
-      );
+      showToast({
+        type: "success",
+        title: "Trade Executed Successfully",
+        message: `Swapped ${inputRef.current?.value || "0"} ${
+          fromToken.symbol
+        } for ${toToken.symbol}`,
+      });
     } catch (error) {
-      updateToastToError(
-        walletConnectToastId,
-        "Trade Failed",
-        "An error occurred while executing the trade. Please try again."
-      );
+      showToast({
+        type: "error",
+        title: "Trade Failed",
+        message:
+          "An error occurred while executing the trade. Please try again.",
+      });
       console.error("Error initiating trade:", error);
     } finally {
       setIsLoadingTrade(false);
