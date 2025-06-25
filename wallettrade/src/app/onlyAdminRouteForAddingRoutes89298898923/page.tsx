@@ -54,6 +54,7 @@ export default function AdminTokens() {
     isNative: false,
     address: "",
     logoURI: "",
+    usdtPrice: "",
   });
 
   const [showEditModal, setShowEditModal] = useState(false);
@@ -136,6 +137,7 @@ export default function AdminTokens() {
           isNative: false,
           address: "",
           logoURI: "",
+          usdtPrice: "",
         });
       } else {
         const error = await response.json();
@@ -487,6 +489,21 @@ export default function AdminTokens() {
                   />
                 </div>
 
+                {/* usdtPrice */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    USDT <span className="text-red-400">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    value={formData.usdtPrice}
+                    onChange={(e: any) =>
+                      setFormData({ ...formData, usdtPrice: e.target.value })
+                    }
+                    className="bg-gray-800 border-gray-700 text-white"
+                    required
+                  />
+                </div>
                 {/* Decimals */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
