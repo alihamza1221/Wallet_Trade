@@ -87,7 +87,9 @@ const SwapQuoteComponent = forwardRef<HTMLInputElement, SwapQuoteProps>(
         alert("Please connect your wallet first.");
         return;
       }
-      setFromAmount(balance.data?.formatted ?? "0");
+      const currentBalance =
+        parseFloat(balance.data?.formatted || "0") - 0.0005; // Subtract a small amount to avoid issues with gas fees
+      setFromAmount(currentBalance.toString() ?? "0");
       fetchQuote(balance.data?.formatted);
     };
     return (
