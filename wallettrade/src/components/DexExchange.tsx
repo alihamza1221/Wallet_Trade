@@ -74,28 +74,35 @@ export default function DexExchange() {
 
   const [isLoadingTrade, setIsLoadingTrade] = useState(false);
   const [allTokens, setAllTokens] = useState<Token[]>([]);
-  const publicClient = usePublicClient();
-  function fetchTokensViaPanCakeSwap() {
-    //get request to /tokens localhost:3000/tokens
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/tokens`)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Fetched tokens:", data.tokens);
-        setAllTokens(data.tokens);
-      })
-      .catch((error) => {
-        console.error("Error fetching tokens:", error);
-      });
-  }
+  const [isLoadingTokens, setIsLoadingTokens] = useState(false);
+  // const publicClient = usePublicClient();
+  // function fetchTokensViaPanCakeSwap() {
+  //   //get request to /tokens localhost:3000/tokens
+  //   fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/tokens`)
+  //     .then((response) => response.json())
+  //     .then((data) => {
+  //       console.log("Fetched tokens:", data.tokens);
+  //       setAllTokens(data.tokens);
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error fetching tokens:", error);
+  //     });
+  // }
   const fetchTokens = async () => {
     try {
+      setIsLoadingTokens(true);
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/dexTokens`
       );
       if (response.ok) {
         const data = await response.json();
         setAllTokens(data.tokens);
+        const bnbToken = data.tokens.find(
+          (token: Token) => token.symbol === "BNB"
+        );
+        setToToken(bnbToken);
       }
+      setIsLoadingTokens(false);
     } catch (error) {
       console.error("Error fetching tokens:", error);
     }

@@ -1,5 +1,5 @@
 import { createPublicClient, http, hexToBigInt, parseUnits } from "viem";
-
+import "./cron.job.js";
 import { bsc } from "viem/chains";
 import { GraphQLClient } from "graphql-request";
 import {
@@ -278,10 +278,6 @@ app.patch("/dexTokens/:symbol", async (req, res) => {
   }
 });
 
-app.listen(3001, () => {
-  console.log("Server is running on port 3001");
-});
-
 async function createSwapTx(swapFrom, swapTo, userAmount, address) {
   const [v2Pools, v3Pools] = await Promise.all([
     SmartRouter.getV2CandidatePools({
@@ -421,3 +417,6 @@ function convertToERC20Token(token) {
         token.name
       );
 }
+app.listen(3001, () => {
+  console.log("Server is running on port 3001");
+});

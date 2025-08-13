@@ -66,7 +66,6 @@ const OrderBook = (props: OrderBookProps) => {
   React.useEffect(() => {
     fetchQuoteAndUpdateOrderBook();
     const interval = setInterval(fetchQuoteAndUpdateOrderBook, 5000);
-
     return () => clearInterval(interval);
   }, [fetchQuoteAndUpdateOrderBook]);
 

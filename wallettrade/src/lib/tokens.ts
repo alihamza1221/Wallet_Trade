@@ -34,6 +34,6 @@ export const defaultTokens: Token[] = [
     isToken: false,
     logoURI:
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQP9cUvoCvmCXO4pNHvnREHBCKW30U-BVxKfg&s",
-    usdtPrice: "645.19",
+    usdtPrice: "811.19",
   },
 ];
